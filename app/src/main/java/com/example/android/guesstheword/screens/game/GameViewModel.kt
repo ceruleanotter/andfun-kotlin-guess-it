@@ -18,6 +18,7 @@ package com.example.android.guesstheword.screens.game
 
 import android.os.CountDownTimer
 import android.text.format.DateUtils
+import androidx.annotation.VisibleForTesting
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.Transformations
@@ -49,13 +50,15 @@ class GameViewModel : ViewModel() {
         private const val DONE = 0L
 
         // This is the time when the phone will start buzzing each second
-        private const val COUNTDOWN_PANIC_SECONDS = 10L
+        @VisibleForTesting
+        const val COUNTDOWN_PANIC_SECONDS = 10L
 
         // This is the number of milliseconds in a second
         private const val ONE_SECOND = 1000L
 
         // This is the total time of the game
-        private const val COUNTDOWN_TIME = 60000L
+        @VisibleForTesting
+        const val COUNTDOWN_TIME = 60000L
 
     }
 
@@ -99,25 +102,36 @@ class GameViewModel : ViewModel() {
         resetList()
         nextWord()
         _score.value = 0
+        _eventBuzz.value = BuzzType.NO_BUZZ
 
         // Creates a timer which triggers the end of the game when it finishes
         timer = object : CountDownTimer(COUNTDOWN_TIME, ONE_SECOND) {
 
             override fun onTick(millisUntilFinished: Long) {
-                _currentTime.value = (millisUntilFinished / ONE_SECOND)
-                if (millisUntilFinished / ONE_SECOND <= COUNTDOWN_PANIC_SECONDS) {
-                    _eventBuzz.value = BuzzType.COUNTDOWN_PANIC
-                }
+                tick(millisUntilFinished)
             }
 
             override fun onFinish() {
-                _currentTime.value = DONE
-                _eventBuzz.value = BuzzType.GAME_OVER
-                _eventGameFinish.value = true
+                finish()
             }
         }
 
         timer.start()
+    }
+
+    @VisibleForTesting
+    fun tick(millisUntilFinished: Long) {
+        _currentTime.value = (millisUntilFinished / ONE_SECOND)
+        if (millisUntilFinished / ONE_SECOND <= COUNTDOWN_PANIC_SECONDS) {
+            _eventBuzz.value = BuzzType.COUNTDOWN_PANIC
+        }
+    }
+
+    @VisibleForTesting
+    fun finish() {
+        _currentTime.value = DONE
+        _eventBuzz.value = BuzzType.GAME_OVER
+        _eventGameFinish.value = true
     }
 
     /**
